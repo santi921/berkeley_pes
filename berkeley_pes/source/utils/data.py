@@ -193,9 +193,32 @@ def write_whole_df_to_npz(df_file, file_out):
              z=np.array(atomic_numbers))
 
 
-def write_whole_df_to_ase_xyz(dict_info, file_out): 
+def write_dict_to_ase_single_mol(dict_info, file_out): 
     """
-    Takes a dataframe and writes it to a npz file
+    Takes a dictionary with a single molecule/gradient/energy and writes it to an ase file
+    """
+    energies = dict_info["energies"]
+    grads_list = dict_info["grads"]
+    xyzs_list = dict_info["xyz"]
+    elements_list = dict_info["elements"]
+    frame_count_global = 0 
+    with open(file_out, "w") as f:    
+        for ind_frame, (energy, grad, xyz, elements) in enumerate(zip(energies, grads_list, xyzs_list, elements_list)):
+            frame_count_global += 1
+            n_atoms = len(elements)
+            #print(elements)
+            f.write(str(n_atoms) + "\n")
+            f.write("Properties=species:S:1:pos:R:3:forces:R:3 energy={} free_energy={} pbc=\"F F F\"\n".format(energy, energy))
+            for ind_atom, (xyz, grad) in enumerate(zip(xyz, grad)): 
+                #print(elements[0])
+                f.write("{:2} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8}\n".format(elements[ind_atom], xyz[0], xyz[1], xyz[2], grad[0], grad[1], grad[2]))
+
+    
+    print("Wrote {} frames to {}".format(frame_count_global, file_out))
+
+def write_dict_to_ase_trajectory(dict_info, file_out): 
+    """
+    Takes a dictionary organized by trajectories and writes it to an ase file
     """
     energies = dict_info["energies"]
     grads_list = dict_info["grads"]

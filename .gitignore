@@ -6,3 +6,6 @@
 # ignore everything in .egg-info
 *.egg-info/*
 *pyc
+*log 
+*txt
+*pt
