@@ -173,6 +173,7 @@ def main():
     print("Number of selected frames: {}".format(len(sparse_inds)))
     print("atomic descriptor keys: {}".format(asapxyz.atomic_desc[0].keys()))
     print("writing subsample xyz file to {}".format(options["sparse_xyz_file"]))
-    print("Minimum energy: {} Maximum Energy {}".format(np.min(energies), np.max(energies)))
+    print("Minimum E: {} Maximum E: {}".format(np.min(energies), np.max(energies)))
+    print("coeff of variability in projection space: {}".format(np.mean(np.sqrt(np.var(proj, axis=1)) / np.abs(np.mean(proj, axis=1)))) )
     write_subsample_xyz(options["xyz_file"], options["sparse_xyz_file"], sparse_inds)
 main()
