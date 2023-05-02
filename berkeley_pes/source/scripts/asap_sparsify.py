@@ -5,9 +5,10 @@ from asaplib.data import ASAPXYZ
 from asaplib.plot import Plotters
 from asaplib.reducedim import Dimension_Reducers
 from asaplib.compressor import Sparsifier
+from asaplib.hypers import gen_default_soap_hyperparameters, gen_default_acsf_hyperparameters
 
 
-def subsample_xyz(xyz_file, output_file,  frame_inds):
+def write_subsample_xyz(xyz_file, output_file,  frame_inds):
     in_track = -1
     write_trigger = False
     # sort frame_inds 
@@ -37,19 +38,27 @@ def main():
     asapxyz = ASAPXYZ(options['xyz_file'], periodic = options['periodic'])
     n_frames = asapxyz.get_num_frames()
     energies = asapxyz.get_property("free_energy", sbs=[i for i in range(n_frames)]) 
-
+    Zs = asapxyz.global_species
+    options["Zs"] = Zs
     # descriptor options - atomic 
-    soap_spec = {
-        "soap1": {
-            "type": "SOAP",
-            "cutoff": 10.0,
-            "n": 6,
-            "l": 6,
-            "atom_gaussian_width": 0.5,
-            "crossover": False,
-            "rbf": "gto",
-        }
-    }
+    assert options["descriptor"] in ["SOAP", "ACSF"], "descriptor not supported"
+    if options["descriptor"] == "SOAP":
+        atomic_spec =\
+            gen_default_soap_hyperparameters(
+                Zs=options["Zs"],
+                soap_n=options["n"],
+                soap_l=options["l"],
+                multisoap=options["multisoap"],
+                sharpness=options["sharpness"],
+                scalerange=options["scalerange"],
+                verbose=False)
+    else:
+        atomic_spec = \
+            gen_default_acsf_hyperparameters(
+                Zs=options["Zs"],
+                sharpness=options["sharpness"],
+                scalerange=options["scalerange"],
+                verbose=False)
     # reducer options 
     reducer_spec = {
         "reducer1": {
@@ -60,34 +69,50 @@ def main():
 
     # descriptor options - global
     desc_spec = {
-        "avgsoap": {
-            "atomic_descriptor": soap_spec, 
+        "avg_atom": {
+            "atomic_descriptor": atomic_spec, 
             "reducer_function": reducer_spec}
     }
 
-    # dim reduction options - if you want to move to pca or sort before sparsify
-    reduce_dict = {}
-    reduce_dict["kpca"] = {
-        "type": "SPARSE_KPCA",
-        "parameter": {
-            "n_components": 10,
-            "n_sparse": -1,  # no sparsification
-            "kernel": {"first_kernel": {"type": "linear"}},
-        },
-    }
     # compute atomic descriptors
-    asapxyz.compute_atomic_descriptors(desc_spec_dict=soap_spec, sbs=[], tag="atomic", n_process=10)
+    asapxyz.compute_atomic_descriptors(desc_spec_dict=atomic_spec, sbs=[], tag="atomic", n_process=10)
     asapxyz.compute_global_descriptors(
         desc_spec_dict=desc_spec,
         sbs=[],
-        keep_atomic=True,  # set to True to keep the atomic descriptors
+        keep_atomic=True,  #
         tag="global",
         n_process=10,
     )
     
 
+    # dim reduction options - if you want to move to pca or sort before sparsify
+    reduce_dict = {}
+    assert options["dim_reduction"] in ["PCA", "SPARSE_KPCA"], "dim reduction not supported"
+    if options["dim_reduction"] == "PCA":
+        reduce_dict["pca"] = {
+            "type": "PCA",
+            "parameter": {
+                "n_components": options["n_components"],
+                "scalecenter": options["scalecenter"],
+            },
+        }
+    else: 
+        reduce_dict["kpca"] = {
+            "type": "SPARSE_KPCA",
+            "parameter": {
+                "n_components": options["n_components"],
+                "n_sparse": -1,  # no sparsification
+            },
+        }
+        if options["kernel"] == "linear":
+            reduce_dict["kpca"]["parameter"]["kernel"] = {"first_kernel": {"type": "linear"}}
+        else:
+            reduce_dict["kpca"]["parameter"]["kernel"] = {"first_kernel": {"type": "polynomial", "d": 3}}
+        
+
+
     dreducer = Dimension_Reducers(reduce_dict)
-    design_mat = asapxyz.fetch_computed_descriptors(["avgsoap"])
+    design_mat = asapxyz.fetch_computed_descriptors(["avg_atom"])
     proj = dreducer.fit_transform(design_mat)
     
     if bool(options["show"]):
@@ -110,10 +135,12 @@ def main():
         }
         asap_plot = Plotters(fig_spec)
         plotcolor = energies
-
+        ind_probe=[i for i in range(1000)]
+        print("max proj {} min {}".format(np.max(proj), np.min(proj)))
+        proj_sample = proj[ind_probe]
         asap_plot.plot(
-            proj[[i for i in range(1000)], [1, 0]], 
-            plotcolor[[i for i in range(1000)]]
+            proj_sample[:, [1, 0]], 
+            plotcolor[ind_probe]
         )
 
     # mode options
@@ -146,5 +173,6 @@ def main():
     print("Number of selected frames: {}".format(len(sparse_inds)))
     print("atomic descriptor keys: {}".format(asapxyz.atomic_desc[0].keys()))
     print("writing subsample xyz file to {}".format(options["sparse_xyz_file"]))
-    subsample_xyz(options["xyz_file"], options["sparse_xyz_file"], sparse_inds)
+    print("Minimum energy: {} Maximum Energy {}".format(np.min(energies), np.max(energies)))
+    write_subsample_xyz(options["xyz_file"], options["sparse_xyz_file"], sparse_inds)
 main()
