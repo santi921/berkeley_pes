@@ -1,0 +1,20 @@
+{
+  "xyz_file": "../../../data/libe_full.xyz",
+  "periodic": false,
+  "save_sparse_inds": true,
+  "sparse_inds_file": "./sparse_inds.txt",
+  "sparse_xyz_file": "../../../data/libe_subselect.xyz",
+  "n_sparse": 10000,
+  "sparse_mode": "fps",
+  "show": true,
+  "descriptor": "ACSF",
+  "n": 4,
+  "l": 4,
+  "multisoap": 2,
+  "sharpness": 1.0,
+  "scalerange": 1.2,
+  "dim_reduction": "PCA",
+  "n_components": 10,
+  "kernel": "linear",
+  "scalecenter": true
+}
