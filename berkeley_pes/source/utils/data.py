@@ -216,6 +216,7 @@ def write_dict_to_ase_single_mol(dict_info, file_out):
     
     print("Wrote {} frames to {}".format(frame_count_global, file_out))
 
+
 def write_dict_to_ase_trajectory(dict_info, file_out): 
     """
     Takes a dictionary organized by trajectories and writes it to an ase file
@@ -240,3 +241,4 @@ def write_dict_to_ase_trajectory(dict_info, file_out):
 
     
     print("Wrote {} frames to {}".format(frame_count_global, file_out))
+
