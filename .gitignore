@@ -1,4 +1,5 @@
 *json
+*bson
 *gz
 *tar
 *xyz
@@ -9,3 +10,4 @@
 *log 
 *txt
 *pt
+*ranking_complete

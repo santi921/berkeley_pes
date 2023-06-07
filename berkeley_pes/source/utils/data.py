@@ -1,3 +1,6 @@
+"""
+    Functions for converting data from one format to another
+"""
 
 import numpy as np 
 import pandas as pd
@@ -192,6 +195,31 @@ def write_whole_df_to_npz(df_file, file_out):
              R=np.array(positions_list), 
              z=np.array(atomic_numbers))
 
+def write_dictionary_to_ase_xyz(dict_info, file_out): 
+    """
+    Takes a dictionary and writes it to a ase_xyz file
+    """ 
+    energies = dict_info["energies"]
+    grads_list = dict_info["grads"]
+    xyzs_list = dict_info["xyz"]
+    elements_list = dict_info["elements"]
+    frame_count_global = 0 
+    with open(file_out, "w") as f:    
+        for ind_frame, (energies_frame, grads_frame, xyzs_frame, elements_frame) in enumerate(zip(energies, grads_list, xyzs_list, elements_list)):
+            #print(ind_frame, len(energies_frame))
+            for ind_mol, (energy, grad, xyz, elements) in enumerate(zip(energies_frame, grads_frame, xyzs_frame, elements_frame)):
+                frame_count_global += 1
+                n_atoms = len(elements)
+                #print(elements)
+                f.write(str(n_atoms) + "\n")
+                f.write("Properties=species:S:1:pos:R:3:forces:R:3 energy={} free_energy={} pbc=\"F F F\"\n".format(energy, energy))
+                for ind_atom, (xyz, grad) in enumerate(zip(xyz, grad)): 
+                    #print(elements[0])
+                    f.write("{:2} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8}\n".format(elements[ind_atom], xyz[0], xyz[1], xyz[2], grad[0], grad[1], grad[2]))
+
+    
+    print("Wrote {} frames to {}".format(frame_count_global, file_out))
+
 
 def write_dict_to_ase_single_mol(dict_info, file_out): 
     """
@@ -217,10 +245,13 @@ def write_dict_to_ase_single_mol(dict_info, file_out):
     print("Wrote {} frames to {}".format(frame_count_global, file_out))
 
 
-def write_dict_to_ase_trajectory(dict_info, file_out): 
+def write_dict_to_ase_trajectory(dict_info, file_out, separate_charges=False, separate_composition=False): 
     """
     Takes a dictionary organized by trajectories and writes it to an ase file
     """
+    # TODO: chunk by charges
+    # TODO: chunk by atomic composition
+    
     energies = dict_info["energies"]
     grads_list = dict_info["grads"]
     xyzs_list = dict_info["xyz"]

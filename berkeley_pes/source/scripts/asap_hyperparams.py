@@ -1,4 +1,8 @@
-import asaplib, argparse
+"""
+    Helper script to generate default hyperparameters for SOAP and ACSF descriptors.
+"""
+
+import argparse
 from asaplib.hypers import gen_default_soap_hyperparameters, gen_default_acsf_hyperparameters
 from asaplib.io import str2bool
 
@@ -8,6 +12,7 @@ def hyper_handler(Zs, n, l, multisoap, sharpness, scalerange, verbose, outfile, 
     else:
         params = gen_default_acsf_hyperparameters(Zs, sharpness, scalerange, verbose)
     print(params)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--Zs", nargs="+", type=int, help="atomic numbers to calculate descriptors for", required=True)
