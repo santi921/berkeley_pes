@@ -119,11 +119,9 @@ def parse_json(json_filename, mode="normal", verbose=False):
                             print("entering ind mode 1")
 
                     if ind_mode == 0:
-                        # print('prefix={}, event={}, value={}'.format(prefix, event, value))
 
                         if event == "number":
                             if "xyz" in prefix.split("."):
-                                # print('prefix={}, event={}, value={}'.format(prefix, event, value))
                                 xyz_unformated.append(float(value))
                             if "charge" in prefix.split("."):
                                 charge_list.append(float(value))
@@ -208,13 +206,18 @@ def parse_json(json_filename, mode="normal", verbose=False):
         grad_format = np.split(grad_formated, np.cumsum(atom_count)[:-1])
         xyz_format = np.split(xyz_formated, np.cumsum(atom_count)[:-1])
         element_list = np.split(element_list, np.cumsum(atom_count)[:-1])  #
+        # charge_list = np.split(charge_list, np.cumsum(frames_per_mol))
+        # split charges into one charges per frame per molecule
 
         # split energies into frames per molecule
         running_start = 0
-
+        charges = []
         for i in range(len(frames_per_mol)):
             energies.append(
                 energies_raw[running_start : running_start + int(frames_per_mol[i])]
+            )
+            charges.append(
+                charge_list[running_start : running_start + int(frames_per_mol[i])]
             )
             running_start += int(frames_per_mol[i])
 
@@ -252,7 +255,7 @@ def parse_json(json_filename, mode="normal", verbose=False):
         print("energies len:         {}".format(len(energies)))
         print("grad_format len:      {}".format(len(grad_format)))
         print("composition_list len: {}".format(len(composition_list)))
-        print("charge_list len:      {}".format(len(charge_list)))
+        print("charge_list len:      {}".format(len(charges)))
         print("frames total:         {}".format(frame_count_total))
         print("frames per mol:       {}".format(frames_per_mol))
         print("sum frames per mol:   {}".format(np.sum(frames_per_mol)))
@@ -265,6 +268,6 @@ def parse_json(json_filename, mode="normal", verbose=False):
         "frames_per_mol": frames_per_mol,
         "atom_count": atom_count,
         "element_composition": composition_list,
-        "charge_list": charge_list,
+        "charges": charges,
     }
     return data

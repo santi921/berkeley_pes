@@ -1,7 +1,7 @@
 """
     Functions for converting data from one format to another
 """
-
+import os 
 import numpy as np 
 import pandas as pd
 from tqdm import tqdm
@@ -273,3 +273,228 @@ def write_dict_to_ase_trajectory(dict_info, file_out, separate_charges=False, se
     
     print("Wrote {} frames to {}".format(frame_count_global, file_out))
 
+
+
+
+def comp_dict_to_string(i):
+    comp_string = ""
+    for key, value in sorted(i.items()):
+        comp_string = comp_string + key + str(value) + "_"
+    comp_string = comp_string[:-1]
+    return comp_string
+
+
+def separate_into_charge_and_comp(dict_info):
+
+    energies = dict_info["energies"]
+    grads_list = dict_info["grads"]
+    xyzs_list = dict_info["xyz"]
+    elements_list = dict_info["elements"]
+    composition_list = dict_info["element_composition"]
+    charge_list = dict_info["charges"]
+    charge_list_single = [i[0] for i in charge_list]
+    list_charge_unique = np.unique(charge_list_single)
+
+    separate_charge_comp_dict = (
+        {}
+    )  # dict with charges and info for each frame in composition
+
+    for charge in list_charge_unique:  # instantiate
+        separate_charge_comp_dict[charge] = {}
+
+    comp_string_list = []
+
+    for ind, i in enumerate(composition_list):
+        comp_string = comp_dict_to_string(i)
+        comp_string_list.append(comp_string)
+        charge = charge_list[ind][0]
+
+        if comp_string not in separate_charge_comp_dict[charge].keys():
+            separate_charge_comp_dict[charge][comp_string] = {
+                "energies": [],
+                "grads": [],
+                "xyzs": [],
+                "elements": [],
+                "charge": [],
+            }
+
+        separate_charge_comp_dict[charge][comp_string]["energies"].append(energies[ind])
+        separate_charge_comp_dict[charge][comp_string]["grads"].append(grads_list[ind])
+        separate_charge_comp_dict[charge][comp_string]["xyzs"].append(xyzs_list[ind])
+        separate_charge_comp_dict[charge][comp_string]["elements"].append(
+            elements_list[ind]
+        )
+
+    return separate_charge_comp_dict
+
+
+def separate_into_comp(dict_info):
+
+    energies = dict_info["energies"]
+    grads_list = dict_info["grads"]
+    xyzs_list = dict_info["xyz"]
+    elements_list = dict_info["elements"]
+    composition_list = dict_info["element_composition"]
+    charge_list = dict_info["charges"]
+    charge_list_single = [i[0] for i in charge_list]
+
+    separate_charge_comp_dict = (
+        {}
+    )  # dict with charges and info for each frame in composition
+
+    # for charge in list_charge_unique:  # instantiate
+    #    separate_charge_comp_dict[charge] = {}
+
+    comp_string_list = []
+    for ind, i in enumerate(composition_list):
+        comp_string = comp_dict_to_string(i)
+        comp_string_list.append(comp_string)
+
+        if comp_string not in separate_charge_comp_dict.keys():
+            separate_charge_comp_dict[comp_string] = {
+                "energies": [],
+                "grads": [],
+                "xyzs": [],
+                "elements": [],
+            }
+
+        separate_charge_comp_dict[comp_string]["energies"].append(energies[ind])
+        separate_charge_comp_dict[comp_string]["grads"].append(grads_list[ind])
+        separate_charge_comp_dict[comp_string]["xyzs"].append(xyzs_list[ind])
+        separate_charge_comp_dict[comp_string]["elements"].append(elements_list[ind])
+
+    return separate_charge_comp_dict
+
+
+def write_ase(f, elements, energy, gradient, xyzs):
+    n_atoms = len(elements)
+    f.write(str(n_atoms) + "\n")
+    f.write(
+        'Properties=species:S:1:pos:R:3:forces:R:3 energy={} free_energy={} pbc="F F F "\n'.format(
+            energy, energy
+        )
+    )
+    for ind_atom, (element, grad, xyz) in enumerate(zip(elements, gradient, xyzs)):
+        f.write(
+            "{:2} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8}\n".format(
+                element,
+                xyz[0],
+                xyz[1],
+                xyz[2],
+                grad[0],
+                grad[1],
+                grad[2],
+            )
+        )
+
+
+def write_dict_to_ase_trajectory(
+    dict_info, root_out, separate_charges=False, separate_composition=False
+):
+    """
+    Takes a dictionary organized by trajectories and writes it to an ase file
+    """
+
+    energies = dict_info["energies"]
+    grads_list = dict_info["grads"]
+    xyzs_list = dict_info["xyz"]
+    elements_list = dict_info["elements"]
+    composition_list = dict_info["element_composition"]
+    charge_list = dict_info["charges"]
+
+    charge_list_single = [i[0] for i in charge_list]
+    list_charge_unique = np.unique(charge_list_single)
+
+    if separate_composition and separate_charges:
+        separate_charge_comp_dict = separate_into_charge_and_comp(dict_info)
+    elif separate_composition:
+        separate_charge_comp_dict = separate_into_comp(dict_info)
+    else:
+        separate_charge_comp_dict = None
+    # print(separate_charge_comp_dict[0]["C7_H8_Li3_O9"]["xyzs"])
+    # create a folder for each charge
+    frame_count_global = 0
+
+    if separate_charges:
+        for charge in list_charge_unique:
+            frame_count_charge = 0
+            if not os.path.exists(root_out + str(charge)):
+                charge_temp = int(charge)
+                if charge < 0:
+                    charge_temp = "neg_" + str(abs(charge_temp))
+                os.makedirs(root_out + str(charge_temp), exist_ok=True)
+
+            for comp_key, dict_info in separate_charge_comp_dict[charge].items():
+                comp_count = 0
+                file = root_out + str(charge_temp) + "/{}.xyz".format(comp_key)
+                with open(file, "w") as f:
+                    for ind_frame, (
+                        energies_frame,
+                        grads_frame,
+                        xyzs_frame,
+                        elements_frame,
+                    ) in enumerate(
+                        zip(
+                            dict_info["energies"],
+                            dict_info["grads"],
+                            dict_info["xyzs"],
+                            dict_info["elements"],
+                        )
+                    ):
+                        for ind_mol, (energy, grad, xyz, elements) in enumerate(
+                            zip(
+                                energies_frame,
+                                grads_frame,
+                                xyzs_frame,
+                                elements_frame,
+                            )
+                        ):
+                            frame_count_global += 1
+                            write_ase(f, elements, energy, grad, xyz)
+                            comp_count += 1
+                            frame_count_charge += 1
+                            frame_count_global += 1
+
+                print("frames to {}: \t\t {}".format(file.split("/")[-1].split(".")[0], comp_count))
+
+            print(
+                "frames charge {} folder:\t {}".format(charge_temp, frame_count_charge)
+            )
+        print("frames total: \t\t {}".format(frame_count_global))
+
+    else:
+        frame_count_global = 0
+        with open(root_out, "w") as f:
+            for ind_frame, (
+                energies_frame,
+                grads_frame,
+                xyzs_frame,
+                elements_frame,
+            ) in enumerate(zip(energies, grads_list, xyzs_list, elements_list)):
+                # print(ind_frame, len(energies_frame))
+                for ind_mol, (energy, grad, xyz, elements) in enumerate(
+                    zip(energies_frame, grads_frame, xyzs_frame, elements_frame)
+                ):
+                    frame_count_global += 1
+                    n_atoms = len(elements)
+                    # print(elements)
+                    f.write(str(n_atoms) + "\n")
+                    f.write(
+                        'Properties=species:S:1:pos:R:3:forces:R:3 energy={} free_energy={} pbc="F F F"\n'.format(
+                            energy, energy
+                        )
+                    )
+                    for ind_atom, (xyz, grad) in enumerate(zip(xyz, grad)):
+                        # print(elements[0])
+                        f.write(
+                            "{:2} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8} {:15.8}\n".format(
+                                elements[ind_atom],
+                                xyz[0],
+                                xyz[1],
+                                xyz[2],
+                                grad[0],
+                                grad[1],
+                                grad[2],
+                            )
+                        )
+        print("Wrote {} frames to {}".format(frame_count_global, root_out))
