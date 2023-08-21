@@ -1,7 +1,5 @@
 from dask import dataframe as dd
 from dask.dataframe.utils import make_meta
-#import pymatgen
-#from pymatgen.core import Structure, Molecule
 
 # importing dataframes
 print("importing dataframes")

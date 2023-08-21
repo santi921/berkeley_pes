@@ -1,0 +1,37 @@
+python /home/santiagovargas/dev/mace/scripts/run_train.py \
+    --name="MACE_model_test_full" \
+    --train_file="/home/santiagovargas/dev/berkeley_pes/data/ase/20230414_rapter_tracks_initial.xyz" \
+    --valid_fraction=0.05 \
+    --config_type_weights='{"Default":1.0}' \
+    --model="MACE" \
+    --hidden_irreps='16x0e + 16x1o' \
+    --r_max=5.0 \
+    --max_num_epochs=1500 \
+    --swa \
+    --start_swa=250 \
+    --swa_lr=0.00025 \
+    --swa_forces_weight=10 \
+    --ema \
+    --ema_decay=0.99 \
+    --amsgrad \
+    --E0s='average'\
+    --restart_latest \
+    --device=cuda \
+    --num_interactions=2 \
+    --num_channels=64 \
+    --max_L=0 \
+    --correlation=3 \
+    --forces_weight=1000 \
+    --energy_weight=40 \
+    --weight_decay=1e-7 \
+    --clip_grad=1.0 \
+    --batch_size=128 \
+    --valid_batch_size=128 \
+    --scheduler_patience=20 \
+    --patience=50 \
+    --eval_interval=2 \
+    --num_workers=32 \
+    --error_table='PerAtomMAE' \
+    --default_dtype="float32"\
+    --save_cpu
+
