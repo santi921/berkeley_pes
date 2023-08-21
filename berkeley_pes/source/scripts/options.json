@@ -1,10 +1,13 @@
 {
-  "xyz_file": "../../../data/test_parser.xyz",
+  "xyz_file": "../../../data/.xyz",
+  "root_folder": "../../../data/ase/rapter_full/",
+  "out_sparse_folder": "../../../data/ase/rapter_full/",
+  "merge_sparse_out": "../../../data/ase/rapter_sparse_full/",
   "periodic": false,
   "save_sparse_inds": true,
   "sparse_inds_file": "./sparse_inds.txt",
   "sparse_xyz_file": "../../../data/test_subselect.xyz",
-  "n_sparse": 100,
+  "n_sparse": 0.3,
   "sparse_mode": "fps",
   "show": true,
   "descriptor": "ACSF",
@@ -14,7 +17,9 @@
   "sharpness": 1.0,
   "scalerange": 1.2,
   "dim_reduction": "SPARSE_KPCA",
-  "n_components": 20,
+  "n_components": 3,
+  "min_sparse": 4,
   "kernel": "linear",
+  "n_process": 5,
   "scalecenter": true
 }
