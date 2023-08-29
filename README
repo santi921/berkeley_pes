@@ -1,0 +1,4 @@
+For sparifying rapter trax dataset the scripts of interest are the following:
+1) read_and_split.py - takes rapter trax dataset and parses w/ low-memory streaming to get frame info in dict format. 
+2) sparsify_folder.py - runs asap to sparsify at the charge, spin, composition-level
+3) merge_sparsify.py - merges results from sparsify to one folder at the level of c, s, comp. Can make composition only as well.
