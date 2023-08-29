@@ -217,8 +217,6 @@ def parse_json(json_filename, mode="normal", verbose=False):
         grad_format = np.split(grad_formated, np.cumsum(atom_count)[:-1])
         xyz_format = np.split(xyz_formated, np.cumsum(atom_count)[:-1])
         element_list = np.split(element_list, np.cumsum(atom_count)[:-1])  #
-        # charge_list = np.split(charge_list, np.cumsum(frames_per_mol))
-        # split charges into one charges per frame per molecule
 
         # split energies into frames per molecule
         running_start = 0

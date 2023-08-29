@@ -7,6 +7,7 @@ def main():
         "/home/santiagovargas/dev/berkeley_pes/data/20230414_rapter_tracks_initial.json"
     )
     data_rapter = parse_json(rapter_file, mode="normal", verbose=True)
+    print("number of frames: {}".format(len(data_rapter)))
 
     write_dict_to_ase_trajectory(
         data_rapter,
