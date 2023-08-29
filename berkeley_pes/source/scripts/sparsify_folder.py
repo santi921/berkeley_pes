@@ -1,9 +1,7 @@
 import json
 import numpy as np
 
-import asaplib
 from asaplib.data import ASAPXYZ
-from asaplib.plot import Plotters
 from asaplib.reducedim import Dimension_Reducers
 from asaplib.compressor import Sparsifier
 from asaplib.hypers import (

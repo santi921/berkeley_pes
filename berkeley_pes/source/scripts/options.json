@@ -2,7 +2,7 @@
   "xyz_file": "../../../data/.xyz",
   "root_folder": "../../../data/ase/rapter_full/",
   "out_sparse_folder": "../../../data/ase/rapter_full/",
-  "merge_sparse_out": "../../../data/ase/rapter_sparse_full/",
+  "merge_sparse_out": "../../../data/ase/rapter_sparse_by_composition/",
   "periodic": false,
   "save_sparse_inds": true,
   "sparse_inds_file": "./sparse_inds.txt",

@@ -1,14 +1,11 @@
 import ijson
 import numpy as np
-import pandas as pd
 
-from berkeley_pes.source.utils.data import *
 
 def parse_json(json_filename, mode="normal", verbose=False):
-
     energies_raw, energies = [], []
     xyz_unformated, grad_unformated = [], []
-    charge_list = []
+    spin_list, charge_list = [], []
     atom_count, element_count, element_list = [], [], []
     element_list_single_structure = []
 
@@ -21,6 +18,8 @@ def parse_json(json_filename, mode="normal", verbose=False):
         line_ind = 0
         frame_count_total = 0
         for prefix, event, value in parser:
+            # if "spin_multiplicity" in prefix and event == "number":
+            #    print("prefix={}, event={}, value={}".format(prefix, event, value))
 
             if mode == "flat":
                 if prefix[0:13] == "item.molecule" or prefix[0:8] == "molecule":
@@ -79,7 +78,6 @@ def parse_json(json_filename, mode="normal", verbose=False):
 
             else:
                 if value is not None:
-
                     if event == "string":
                         if "formula_alphabetical" in prefix.split("."):
                             # sum all integers in string
@@ -119,12 +117,18 @@ def parse_json(json_filename, mode="normal", verbose=False):
                             print("entering ind mode 1")
 
                     if ind_mode == 0:
-
                         if event == "number":
                             if "xyz" in prefix.split("."):
                                 xyz_unformated.append(float(value))
                             if "charge" in prefix.split("."):
                                 charge_list.append(float(value))
+                            if "spin_multiplicity" in prefix.split("."):
+                                # print(
+                                #    "prefix={}, event={}, value={}".format(
+                                #        prefix, event, value
+                                #    )
+                                # )
+                                spin_list.append(float(value))
 
                         if event == "string":
                             # print('prefix={}, event={}, value={}'.format(prefix, event, value))
@@ -163,6 +167,13 @@ def parse_json(json_filename, mode="normal", verbose=False):
                             # print('prefix={}, event={}, value={}'.format(prefix, event, value))
                             if "charge" in prefix.split("."):
                                 charge_list.append(float(value))
+                            if "spin_multiplicity" in prefix.split("."):
+                                """print(
+                                    "prefix={}, event={}, value={}".format(
+                                        prefix, event, value
+                                    )
+                                )"""
+                                spin_list.append(float(value))
 
                         if event == "string":
                             if "name" in prefix.split("."):
@@ -212,12 +223,16 @@ def parse_json(json_filename, mode="normal", verbose=False):
         # split energies into frames per molecule
         running_start = 0
         charges = []
+        spins = []
         for i in range(len(frames_per_mol)):
             energies.append(
                 energies_raw[running_start : running_start + int(frames_per_mol[i])]
             )
             charges.append(
                 charge_list[running_start : running_start + int(frames_per_mol[i])]
+            )
+            spins.append(
+                spin_list[running_start : running_start + int(frames_per_mol[i])]
             )
             running_start += int(frames_per_mol[i])
 
@@ -247,10 +262,10 @@ def parse_json(json_filename, mode="normal", verbose=False):
         composition_list.append(composition)
 
     if verbose:
-
         print("element_list len:     {}".format(len(element_list)))
         print("element_count len:    {}".format(len(element_count)))
         print("atom_count len:       {}".format(len(atom_count)))
+        print("spins len:            {}".format(len(spins)))
         print("xyz_format len:       {}".format(len(xyz_format)))
         print("energies len:         {}".format(len(energies)))
         print("grad_format len:      {}".format(len(grad_format)))
@@ -269,5 +284,6 @@ def parse_json(json_filename, mode="normal", verbose=False):
         "atom_count": atom_count,
         "element_composition": composition_list,
         "charges": charges,
+        "spin": spins,
     }
     return data
